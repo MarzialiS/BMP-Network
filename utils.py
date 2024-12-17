@@ -14,6 +14,7 @@ def forget(T, pos):
     T_out = sp.MutableDenseNDimArray(np.zeros(new_format))
     indices = product([0,1], repeat=len(T.shape))
     for index in indices:
+        
         ind1= list(index)[:pos]
         ind2 = list(index)[pos:]
         T_out[ind1+[0]+ind2] = T[index]
@@ -33,7 +34,6 @@ def blow(T):
                 T_out[list(index)+[i]] = 0
     return T_out
 
-
 def BM_product(tensor_list):
     # tensor_list must be ordered according to the order requested for the BM product
     # up to now it takes only tensors with indices in {0,1}
@@ -41,6 +41,52 @@ def BM_product(tensor_list):
     T_out = sp.MutableDenseNDimArray(np.zeros(tensor_list[0].shape))
     for index in indices:
         for i in range(2):
+            add = 1
+            for j in range(len(tensor_list[0].shape)):
+                index_copy = list(index)
+                index_copy[j] = i
+                add = add*tensor_list[j][index_copy]
+            T_out[index] += add
+    return T_out
+
+def general_forget(T, pos):
+    N = T.shape[0] # assuming T is cubical 
+    ### This method takes in input an n-order tensor T and gives as output a n+1-order tensor T
+    ### pos is an integer in the interval [0,lent(T.shape)] 
+    new_format = array("i",[N for _ in range(len(T.shape)+1)])
+    T_out = sp.MutableDenseNDimArray(np.zeros(new_format))
+    indices = product([i for i in range(N)], repeat=len(T.shape))
+    for index in indices:      
+        ind1= list(index)[:pos]
+        ind2 = list(index)[pos:]
+        for i in range(N):
+            T_out[ind1+[i]+ind2] = T[index]
+
+    return T_out
+    
+
+def general_blow(T):
+    N = T.shape[0] # assuming T is cubical
+    new_format = array("i",[N for _ in range(len(T.shape)+1)])
+    T_out = sp.MutableDenseNDimArray(np.zeros(new_format))
+    indices = product([i for i in range(N)], repeat=len(T.shape))
+    for index in indices:
+        for i in range(N):
+            if i == index[0]:
+                T_out[list(index)+[i]] = T[index]
+            else:
+                T_out[list(index)+[i]] = 0
+    return T_out
+
+
+def general_BM_product(tensor_list):
+    N = tensor_list[0].shape[0]
+    # tensor_list must be ordered according to the order requested for the BM product
+    # up to now it takes only tensors with indices in {0,1}
+    indices = product([i for i in range(N)], repeat=len(tensor_list[0].shape))
+    T_out = sp.MutableDenseNDimArray(np.zeros(tensor_list[0].shape))
+    for index in indices:
+        for i in range(N):
             add = 1
             for j in range(len(tensor_list[0].shape)):
                 index_copy = list(index)
@@ -75,14 +121,14 @@ def flat(T):
 def slice_index(T, index):
     # return T[:,:,:,[index]]
     new_T = sp.MutableDenseNDimArray(np.zeros([8]))
-    new_T[0] = T[[0,0,0]+list(index)]
-    new_T[1] = T[[1,0,0]+list(index)]
-    new_T[2] = T[[0,1,0]+list(index)]
-    new_T[3] = T[[1,1,0]+list(index)]
-    new_T[4] = T[[0,0,1]+list(index)]
-    new_T[5] = T[[1,0,1]+list(index)]
-    new_T[6] = T[[0,1,1]+list(index)]
-    new_T[7] = T[[1,1,1]+list(index)]
+    new_T[[0]] = T[[0,0,0]+list(index)]
+    new_T[[1]] = T[[1,0,0]+list(index)]
+    new_T[[2]] = T[[0,1,0]+list(index)]
+    new_T[[3]] = T[[1,1,0]+list(index)]
+    new_T[[4]] = T[[0,0,1]+list(index)]
+    new_T[[5]] = T[[1,0,1]+list(index)]
+    new_T[[6]] = T[[0,1,1]+list(index)]
+    new_T[[7]] = T[[1,1,1]+list(index)]
     return new_T
     # 
 
@@ -109,7 +155,7 @@ def draw_general(T,name):
     # vale soltanto per tensori fino a ordine 5
     length = len(T.shape)
     fig, axs = plt.subplots(2**(int(np.floor((length-3)/2))),2**(int(np.floor((length-2)/2))))
-    print(axs)
+    #print(axs)
     if length-3>0:
         for i,ax in enumerate(axs.flat):
             index = np.unravel_index(i, [2 for _ in range(length-3)])
