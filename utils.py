@@ -37,6 +37,7 @@ def blow(T):
 def BM_product(tensor_list):
     # tensor_list must be ordered according to the order requested for the BM product
     # up to now it takes only tensors with indices in {0,1}
+    tensor_list = [tensor_list.pop()]+tensor_list
     indices = product([0,1], repeat=len(tensor_list[0].shape))
     T_out = sp.MutableDenseNDimArray(np.zeros(tensor_list[0].shape))
     for index in indices:
@@ -81,6 +82,7 @@ def general_blow(T):
 
 def general_BM_product(tensor_list):
     N = tensor_list[0].shape[0]
+    tensor_list = [tensor_list.pop()]+tensor_list
     # tensor_list must be ordered according to the order requested for the BM product
     # up to now it takes only tensors with indices in {0,1}
     indices = product([i for i in range(N)], repeat=len(tensor_list[0].shape))
