@@ -17,7 +17,7 @@ E = blow(forget(forget(E,0),1))
 
 A = forget(forget(A,0),2)
 
-T = BM_product([A,B,C,D,E])
+T = BM_product([B,C,D,E,A])
 
 print(T)
 
