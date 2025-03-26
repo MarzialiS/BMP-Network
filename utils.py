@@ -9,7 +9,9 @@ import matplotlib.pyplot as plt
 
 def forget(T, pos):
     ### This method takes in input an n-order tensor T and gives as output a n+1-order tensor T
-    ### pos is an integer in the interval [0,lent(T.shape)] 
+    ### pos is an integer in the interval [0,len(T.shape)] 
+    if pos < 0 or pos > len(T.shape):
+        raise ValueError("Invalid value for pos")
     new_format = array("i",[2 for _ in range(len(T.shape)+1)])
     T_out = sp.MutableDenseNDimArray(np.zeros(new_format))
     indices = product([0,1], repeat=len(T.shape))
@@ -53,7 +55,9 @@ def BM_product(tensor_list):
 def general_forget(T, pos):
     N = T.shape[0] # assuming T is cubical 
     ### This method takes in input an n-order tensor T and gives as output a n+1-order tensor T
-    ### pos is an integer in the interval [0,lent(T.shape)] 
+    ### pos is an integer in the interval [0,len(T.shape)] 
+    if pos < 0 or pos > len(T.shape):
+        raise ValueError("Invalid value for pos")
     new_format = array("i",[N for _ in range(len(T.shape)+1)])
     T_out = sp.MutableDenseNDimArray(np.zeros(new_format))
     indices = product([i for i in range(N)], repeat=len(T.shape))
