@@ -99,7 +99,107 @@ def general_BM_product(tensor_list):
                 index_copy[j] = i
                 add = add*tensor_list[j][index_copy]
             T_out[index] += add
-    return T_out
+    return np.array(T_out)
+
+def get_tensor_operations_indexed(i, T, adjacency_matrix):
+    """
+    Automates the identification of forgets (J, H) and blows
+    using 0-based indexing (0 to q-1).
+    
+    Args:
+        i: Current node index (0 to q-1)
+        q: Total number of nodes
+        adjacency_matrix: q x q matrix (A[j][i] == 1 if j is parent of i)
+    """
+    # Step 1: Identify Parents (Pi)
+    # Check column i for rows j < i
+    q = adjacency_matrix.shape[0] # Assuming A is the adjacency matrix
+    pi = [j for j in range(i) if adjacency_matrix[j][i] == 1]
+    
+    operations = []
+    
+    # Step 2: Forget Previous (J)
+    # Target dimension after this step: i + 1
+    if i > 0:
+        pre_nodes = set(range(i))
+        j_set = sorted(list(pre_nodes - set(pi)))
+        for index in j_set:
+            T = forget(T, index)
+        operations.append(f"Step 1 (Forget J): {j_set} -> Tensor order after forget: {T.shape}")
+
+    # Step 3: Blow Link (b)
+    # Target dimension after this step: i + 2
+    if i < q - 1:
+        T = blow(T)
+        operations.append(f"Step 2 (Blow): Inflate to order {i+2} (Link index 0 == index {i+1})")
+
+    # Step 4: Forget Future (H)
+    # Target dimension after this step: q
+    if i + 1 < q - 1:
+        h_set = list(range(i + 2, q))
+        for index in h_set:
+            T = forget(T, index)
+        operations.append(f"Step 3 (Forget H): {h_set} -> Final tensor order {q}")
+
+    return {
+        "node_index": i,
+        "parent_indices": pi, 
+        "tensor": T,
+        "op_sequence": operations
+    }
+
+def edge_index_to_adj(edge_index, q):
+    """
+    Converts an edge_index (2 x E) to a q x q Adjacency Matrix.
+    
+    Args:
+        edge_index: List or array of shape (2, E) 
+                    edge_index[0] = source nodes
+                    edge_index[1] = target nodes
+        q: The total number of nodes in the graph
+        
+    Returns:
+        adj: A q x q numpy array where adj[j][i] = 1 if there's an edge j -> i
+    """
+    # Initialize a q x q matrix of zeros
+    adj = np.zeros((q, q), dtype=int)
+    
+    # Extract sources and targets
+    sources = edge_index[:,0]
+    targets = edge_index[:,1]
+    
+    # Fill the matrix: A[source][target] = 1
+    # Since your definitions use A[j][i] for j being a parent of i
+    for j, i in zip(sources, targets):
+        if j < q and i < q:
+            adj[j][i] = 1
+            
+    return adj
+
+def create_random_tensors(adjacency_matrix, params = [sp.symbols("alpha"), sp.symbols("beta")]):
+    '''
+    Creates a list of tensors according to the structure of the adjacency matrix.
+    Each tensor is initialized with the same parameters and has an order equal to the number of parents of the corresponding node + 1.
+    '''
+    q = adjacency_matrix.shape[0]
+    T_list = []
+    for j in range(q):
+        T = sp.MutableDenseNDimArray(params)
+        for _ in range(adjacency_matrix[:,j].sum()):
+            T = [T, T[::-1]]
+        T_list.append(np.array(T))
+    return T_list
+
+def create_network(adjacency_matrix, tensors_list):
+    '''
+    Creates a list of tensors according to the structure of the adjacency matrix and the input tensors list.
+    Each tensor is transformed according to the operations defined by the adjacency matrix and the position of the node in the graph.
+    '''
+    q = adjacency_matrix.shape[0]
+    network = []
+    for i in range(q):
+        network.append(get_tensor_operations_indexed(i, tensors_list[i], adjacency_matrix)['tensor'])
+    return network
 
 def flat(T):
 
@@ -194,6 +294,7 @@ if __name__== '__main__':
     a_b_diff = sp.MutableDenseNDimArray([a-b,b-a])
     a_b = sp.MutableDenseNDimArray([a,b])
     b_a = sp.MutableDenseNDimArray([b,a])
+    
     from sympy import tensorproduct as tp
     from utils import *
     C_op = sp.MutableDenseNDimArray([[a,b],[b,a]])
