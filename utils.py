@@ -88,7 +88,7 @@ def general_BM_product(tensor_list):
     N = tensor_list[0].shape[0]
     tensor_list = [tensor_list.pop()]+tensor_list
     # tensor_list must be ordered according to the order requested for the BM product
-    # up to now it takes only tensors with indices in {0,1}
+    # valid for tensors with indices in {0,...,N-1}
     indices = product([i for i in range(N)], repeat=len(tensor_list[0].shape))
     T_out = sp.MutableDenseNDimArray(np.zeros(tensor_list[0].shape))
     for index in indices:
@@ -102,11 +102,10 @@ def general_BM_product(tensor_list):
     return T_out
 
 def flat(T):
-    # trasforma i tensori [2,2,2,....] in [8,...]
-    # utile per il plot dei tensori
+
     length = len(T.shape)
     if length<3:
-        raise Exception('il tensore non è 3D')
+        raise Exception('tensor is not 3D')
     new_shape = [8]+[2 for _ in range(length-3)]
     new_T = sp.MutableDenseNDimArray(np.zeros(new_shape))
     if length-3>0:
@@ -139,7 +138,7 @@ def slice_index(T, index):
     # 
 
 def draw_tensor(T,ax):
-    #per ora vale solo per quelli di ordine 3
+    # draw tensors of order 3 with indices in {0,1}
     ax.plot([5.6, 9.4],[2,2],'k')
     ax.plot([7.6,11.4],[4,4],'k')
     ax.plot([5.3,6.7],[2.3,3.7],'k')
@@ -158,7 +157,7 @@ def draw_tensor(T,ax):
         ax.text(x[i], y[i], T[i])
 
 def draw_general(T,name):
-    # vale soltanto per tensori fino a ordine 5
+    #  draws tensors up to order 5
     length = len(T.shape)
     fig, axs = plt.subplots(2**(int(np.floor((length-3)/2))),2**(int(np.floor((length-2)/2))))
     #print(axs)
